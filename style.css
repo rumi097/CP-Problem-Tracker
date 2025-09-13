@@ -1,0 +1,148 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    width: 280px; /* Increased width for more space */
+    padding: 15px;
+    background-color: #f4f5f7;
+    color: #172b4d;
+}
+
+.container {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.date-display {
+    font-size: 13px;
+    color: #5e6c84;
+    margin-bottom: 5px;
+}
+
+h1 {
+    font-size: 18px;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.count-display {
+    font-size: 60px;
+    font-weight: bold;
+    margin: 10px 0;
+    color: #0052cc;
+}
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+    font-weight: bold;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background-color: #dfe1e6;
+    color: #42526e;
+    transition: background-color 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #c1c7d0;
+}
+
+#incrementBtn {
+    background-color: #0052cc;
+    color: white;
+}
+
+#incrementBtn:hover {
+    background-color: #0065ff;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #c1c7d0;
+    margin: 20px 0;
+}
+
+.history-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #0065ff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.history-btn:hover {
+    background-color: #0052cc;
+}
+
+/* History View Styles */
+.history-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+    justify-content: center;
+}
+
+.back-btn {
+    position: absolute;
+    left: 0;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #42526e;
+}
+
+#fullHistoryContainer {
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.history-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-radius: 3px;
+}
+
+.history-entry:nth-child(odd) {
+    background-color: #dfe1e6;
+}
+
+.history-date {
+    font-size: 14px;
+    color: #172b4d;
+}
+
+.history-count {
+    font-size: 14px;
+    font-weight: bold;
+    color: #0052cc;
+}
+
+.total-count {
+    font-size: 14px;
+    font-weight: bold;
+    color: #172b4d;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #dfe1e6;
+    border-radius: 3px;
+}

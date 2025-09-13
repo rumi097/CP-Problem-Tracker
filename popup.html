@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Daily Grind Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="mainView" class="container">
+        <div id="dateDisplay" class="date-display"></div>
+        <h1>Today's Count</h1>
+        <div id="countDisplay" class="count-display">0</div>
+        <div class="button-group">
+            <button id="decrementBtn" class="btn">-</button>
+            <button id="incrementBtn" class="btn">+</button>
+        </div>
+        <hr>
+        <button id="historyBtn" class="history-btn">View Full History</button>
+    </div>
+
+    <div id="historyView" class="container hidden">
+        <div class="history-header">
+             <button id="backBtn" class="back-btn">← Back</button>
+             <h2>Full History</h2>
+        </div>
+
+        <div id="totalCountDisplay" class="total-count"></div>
+        <div id="fullHistoryContainer"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
