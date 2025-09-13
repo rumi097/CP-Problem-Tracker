@@ -9,10 +9,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyBtn = document.getElementById('historyBtn');
     const backBtn = document.getElementById('backBtn');
     const fullHistoryContainer = document.getElementById('fullHistoryContainer');
+    const countdownDisplay = document.getElementById('countdownDisplay'); // ADDED for timer
 
-    // === Helper Functions ===
-    
-    // NEW FUNCTION: This correctly gets the date based on your local timezone.
+    // === NEW LOGIC FOR COUNTDOWN TIMER DISPLAY ===
+
+    // Formats milliseconds into HH:MM:SS
+    const formatTime = (ms) => {
+        if (ms < 0) ms = 0;
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    };
+
+    // Listens for changes from the background script and updates the countdown in real-time
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (changes.remainingTime) {
+            countdownDisplay.textContent = formatTime(changes.remainingTime.newValue);
+        }
+    });
+
+    // Gets the most recent countdown time as soon as the popup opens
+    chrome.storage.local.get('remainingTime', (result) => {
+        if (result.remainingTime) {
+            countdownDisplay.textContent = formatTime(result.remainingTime);
+        }
+    });
+
+    // === EXISTING LOGIC (UNCHANGED) ===
+
     const getLocalDateKey = () => {
         const today = new Date();
         const year = today.getFullYear();
@@ -26,13 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date().toLocaleString('en-US', options);
     };
 
-    // === Core Application Logic ===
     const updateUI = () => {
         chrome.storage.local.get('problemData', (result) => {
             const data = result.problemData || {};
-            const todayKey = getLocalDateKey(); // Use the new local date function
+            const todayKey = getLocalDateKey();
             const todayCount = data[todayKey] || 0;
-
             dateDisplay.textContent = formatDate();
             countDisplay.textContent = todayCount;
             renderFullHistory(data);
@@ -68,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const modifyCount = (amount) => {
-        const todayKey = getLocalDateKey(); // Use the new local date function
+        const todayKey = getLocalDateKey();
         chrome.storage.local.get('problemData', (result) => {
             const data = result.problemData || {};
             let currentCount = data[todayKey] || 0;
@@ -78,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // === Event Listeners ===
     if (incrementBtn) incrementBtn.addEventListener('click', () => modifyCount(1));
     if (decrementBtn) decrementBtn.addEventListener('click', () => modifyCount(-1));
     if (historyBtn) historyBtn.addEventListener('click', () => {
@@ -94,6 +117,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // === Initial Load ===
     updateUI();
 });

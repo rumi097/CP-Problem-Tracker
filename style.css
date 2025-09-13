@@ -14,6 +14,15 @@ body {
     display: none;
 }
 
+/* Add this new style for the countdown timer */
+.countdown-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #42526e; /* A dark gray color */
+    margin-bottom: 10px; /* Adds some space below the timer */
+    font-family: monospace; /* Ensures numbers don't shift width */
+}
+
 .date-display {
     font-size: 13px;
     color: #5e6c84;
