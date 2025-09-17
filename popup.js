@@ -9,11 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyBtn = document.getElementById('historyBtn');
     const backBtn = document.getElementById('backBtn');
     const fullHistoryContainer = document.getElementById('fullHistoryContainer');
-    const countdownDisplay = document.getElementById('countdownDisplay'); // ADDED for timer
+    const countdownDisplay = document.getElementById('countdownDisplay');
 
-    // === NEW LOGIC FOR COUNTDOWN TIMER DISPLAY ===
+    // === Helper Functions ===
+    const formatDateToKey = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
-    // Formats milliseconds into HH:MM:SS
+    const getLocalDateKey = () => formatDateToKey(new Date());
+
+    const formatDate = () => {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date().toLocaleString('en-US', options);
+    };
+    
     const formatTime = (ms) => {
         if (ms < 0) ms = 0;
         const totalSeconds = Math.floor(ms / 1000);
@@ -23,62 +35,71 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${hours}:${minutes}:${seconds}`;
     };
 
-    // Listens for changes from the background script and updates the countdown in real-time
     chrome.storage.onChanged.addListener((changes, namespace) => {
         if (changes.remainingTime) {
             countdownDisplay.textContent = formatTime(changes.remainingTime.newValue);
         }
     });
-
-    // Gets the most recent countdown time as soon as the popup opens
     chrome.storage.local.get('remainingTime', (result) => {
         if (result.remainingTime) {
             countdownDisplay.textContent = formatTime(result.remainingTime);
         }
     });
 
-    // === EXISTING LOGIC (UNCHANGED) ===
-
-    const getLocalDateKey = () => {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-        const day = String(today.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    const formatDate = () => {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date().toLocaleString('en-US', options);
-    };
-
+    // === Core Application Logic ===
     const updateUI = () => {
         chrome.storage.local.get('problemData', (result) => {
             const data = result.problemData || {};
             const todayKey = getLocalDateKey();
             const todayCount = data[todayKey] || 0;
+
             dateDisplay.textContent = formatDate();
             countDisplay.textContent = todayCount;
             renderFullHistory(data);
         });
     };
-
+    
+    // FINAL UPDATED RENDER HISTORY FUNCTION
     const renderFullHistory = (data) => {
         if (!fullHistoryContainer) return;
         fullHistoryContainer.innerHTML = '';
-        const dates = Object.keys(data).filter(date => data[date] > 0).sort();
-        const totalCount = dates.reduce((sum, date) => sum + data[date], 0);
         const totalCountDisplay = document.getElementById('totalCountDisplay');
-        if (totalCountDisplay) {
-            totalCountDisplay.textContent = `Total Problems Solved: ${totalCount}`;
-        }
-        if (dates.length === 0) {
+
+        const savedDates = Object.keys(data);
+        if (savedDates.length === 0) {
+            if (totalCountDisplay) totalCountDisplay.textContent = 'Total Problems Solved: 0';
             fullHistoryContainer.innerHTML = '<p>No history yet. Solve a problem to begin!</p>';
             return;
         }
-        dates.reverse().forEach((date, index) => {
-            const count = data[date];
-            const dayNumber = dates.length - index;
+
+        // ** NEW ROBUST LOGIC TO FILL GAPS **
+        const allDatesData = {};
+        // Use a regex to properly parse YYYY-MM-DD and avoid timezone issues
+        const firstDateStr = savedDates.sort()[0];
+        const parts = firstDateStr.split('-').map(Number);
+        const firstDate = new Date(parts[0], parts[1] - 1, parts[2]);
+
+        const today = new Date();
+        // Set today to the end of the day to ensure the loop includes it
+        today.setHours(23, 59, 59, 999); 
+        
+        // Loop from the first recorded day until today
+        for (let day = new Date(firstDate); day <= today; day.setDate(day.getDate() + 1)) {
+            const dayKey = formatDateToKey(day);
+            // Use saved count if it exists, otherwise default to 0
+            allDatesData[dayKey] = data[dayKey] || 0;
+        }
+        
+        const allDates = Object.keys(allDatesData);
+        const totalCount = Object.values(allDatesData).reduce((sum, count) => sum + count, 0);
+
+        if (totalCountDisplay) {
+            totalCountDisplay.textContent = `Total Problems Solved: ${totalCount}`;
+        }
+        
+        allDates.reverse().forEach((date, index) => {
+            const count = allDatesData[date];
+            const dayNumber = allDates.length - index;
             const entryDiv = document.createElement('div');
             entryDiv.className = 'history-entry';
             entryDiv.innerHTML = `
@@ -102,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // === Event Listeners (Unchanged) ===
     if (incrementBtn) incrementBtn.addEventListener('click', () => modifyCount(1));
     if (decrementBtn) decrementBtn.addEventListener('click', () => modifyCount(-1));
     if (historyBtn) historyBtn.addEventListener('click', () => {
@@ -117,5 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // === Initial Load ===
     updateUI();
 });
