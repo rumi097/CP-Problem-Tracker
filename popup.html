@@ -9,15 +9,30 @@
 
     <div id="mainView" class="container">
         <div id="countdownDisplay" class="countdown-display"></div>
-
         <div id="dateDisplay" class="date-display"></div>
-        <h1>Today's Count</h1>
-        <div id="countDisplay" class="count-display">0</div>
-        <div class="button-group">
-            <button id="decrementBtn" class="btn">-</button>
-            <button id="incrementBtn" class="btn">+</button>
+
+        <div class="main-content">
+            <div class="counter-section">
+                <h1>Today's Count</h1>
+                <div id="countDisplay" class="count-display">0</div>
+                <div class="button-group">
+                    <button id="decrementBtn" class="btn">-</button>
+                    <button id="incrementBtn" class="btn">+</button>
+                </div>
+            </div>
+            <div class="streak-section">
+                <div class="streak-display">
+                    <span class="streak-emoji">🔥</span>
+                    <span id="currentStreak">0</span>
+                </div>
+                <div class="streak-label">Current Streak</div>
+                <hr class="streak-hr">
+                <div class="streak-highest">
+                    Highest: <span id="highestStreak">0</span>
+                </div>
+            </div>
         </div>
-        <hr>
+
         <button id="historyBtn" class="history-btn">View Full History</button>
     </div>
 
@@ -26,7 +41,6 @@
              <button id="backBtn" class="back-btn">← Back</button>
              <h2>Full History</h2>
         </div>
-
         <div id="totalCountDisplay" class="total-count"></div>
         <div id="fullHistoryContainer"></div>
     </div>

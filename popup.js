@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const backBtn = document.getElementById('backBtn');
     const fullHistoryContainer = document.getElementById('fullHistoryContainer');
     const countdownDisplay = document.getElementById('countdownDisplay');
+    const currentStreakDisplay = document.getElementById('currentStreak');
+    const highestStreakDisplay = document.getElementById('highestStreak');
 
     // === Helper Functions ===
     const formatDateToKey = (date) => {
@@ -18,14 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
-
     const getLocalDateKey = () => formatDateToKey(new Date());
-
-    const formatDate = () => {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date().toLocaleString('en-US', options);
-    };
-    
+    const formatDate = () => new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formatTime = (ms) => {
         if (ms < 0) ms = 0;
         const totalSeconds = Math.floor(ms / 1000);
@@ -35,27 +31,62 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${hours}:${minutes}:${seconds}`;
     };
 
+    // === Real-time Current Streak Logic ===
+    function updateStreak(currentProblemCount) {
+        const todayKey = getLocalDateKey();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayKey = formatDateToKey(yesterday);
+        chrome.storage.local.get(['streakData', 'problemData'], (result) => {
+            let streak = result.streakData || { currentStreak: 0, highestStreak: 0, lastStreakDate: null };
+            const problemData = result.problemData || {};
+            const yesterdayCount = problemData[yesterdayKey] || 0;
+            const wasStreakDayYesterday = streak.lastStreakDate === yesterdayKey && yesterdayCount >= 4;
+            if (streak.lastStreakDate !== todayKey && !wasStreakDayYesterday) {
+                streak.currentStreak = 0;
+            }
+            const hasMetThresholdToday = currentProblemCount >= 4;
+            const wasStreakDayToday = streak.lastStreakDate === todayKey;
+            if (hasMetThresholdToday && !wasStreakDayToday) {
+                streak.currentStreak += 1;
+                streak.lastStreakDate = todayKey;
+            } else if (!hasMetThresholdToday && wasStreakDayToday) {
+                streak.currentStreak -= 1;
+                streak.lastStreakDate = wasStreakDayYesterday ? yesterdayKey : null;
+            }
+            if (streak.currentStreak > streak.highestStreak) {
+                streak.highestStreak = streak.currentStreak;
+            }
+            chrome.storage.local.set({ streakData: streak });
+        });
+    }
+
+    // === Listeners ===
     chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (changes.remainingTime) {
-            countdownDisplay.textContent = formatTime(changes.remainingTime.newValue);
-        }
+        if (changes.remainingTime) countdownDisplay.textContent = formatTime(changes.remainingTime.newValue);
+        if (changes.streakData) updateStreakDisplays(changes.streakData.newValue);
     });
-    chrome.storage.local.get('remainingTime', (result) => {
-        if (result.remainingTime) {
-            countdownDisplay.textContent = formatTime(result.remainingTime);
-        }
+    chrome.storage.local.get(['remainingTime', 'streakData'], (result) => {
+        if (result.remainingTime) countdownDisplay.textContent = formatTime(result.remainingTime);
+        if (result.streakData) updateStreakDisplays(result.streakData);
     });
+
+    function updateStreakDisplays(streakData) {
+        if (!streakData) streakData = { currentStreak: 0, highestStreak: 0 };
+        currentStreakDisplay.textContent = streakData.currentStreak || 0;
+        highestStreakDisplay.textContent = streakData.highestStreak || 0;
+    }
 
     // === Core Application Logic ===
     const updateUI = () => {
-        chrome.storage.local.get('problemData', (result) => {
+        chrome.storage.local.get(['problemData', 'streakData'], (result) => {
             const data = result.problemData || {};
             const todayKey = getLocalDateKey();
             const todayCount = data[todayKey] || 0;
-
             dateDisplay.textContent = formatDate();
             countDisplay.textContent = todayCount;
             renderFullHistory(data);
+            updateStreakDisplays(result.streakData);
         });
     };
     
@@ -64,29 +95,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!fullHistoryContainer) return;
         fullHistoryContainer.innerHTML = '';
         const totalCountDisplay = document.getElementById('totalCountDisplay');
-
         const savedDates = Object.keys(data);
+
+        // If there's no data at all, show the empty message.
         if (savedDates.length === 0) {
             if (totalCountDisplay) totalCountDisplay.textContent = 'Total Problems Solved: 0';
             fullHistoryContainer.innerHTML = '<p>No history yet. Solve a problem to begin!</p>';
             return;
         }
 
-        // ** NEW ROBUST LOGIC TO FILL GAPS **
         const allDatesData = {};
-        // Use a regex to properly parse YYYY-MM-DD and avoid timezone issues
         const firstDateStr = savedDates.sort()[0];
         const parts = firstDateStr.split('-').map(Number);
         const firstDate = new Date(parts[0], parts[1] - 1, parts[2]);
-
         const today = new Date();
-        // Set today to the end of the day to ensure the loop includes it
-        today.setHours(23, 59, 59, 999); 
-        
-        // Loop from the first recorded day until today
+        today.setHours(23, 59, 59, 999);
+
         for (let day = new Date(firstDate); day <= today; day.setDate(day.getDate() + 1)) {
             const dayKey = formatDateToKey(day);
-            // Use saved count if it exists, otherwise default to 0
             allDatesData[dayKey] = data[dayKey] || 0;
         }
         
@@ -115,15 +141,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const modifyCount = (amount) => {
         const todayKey = getLocalDateKey();
         chrome.storage.local.get('problemData', (result) => {
-            const data = result.problemData || {};
+            const data = (result.problemData && typeof result.problemData === 'object') ? result.problemData : {};
             let currentCount = data[todayKey] || 0;
             if (currentCount + amount < 0) return;
-            data[todayKey] = currentCount + amount;
-            chrome.storage.local.set({ problemData: data }, updateUI);
+            const newCount = currentCount + amount;
+            data[todayKey] = newCount;
+            chrome.storage.local.set({ problemData: data }, () => {
+                updateUI();
+                updateStreak(newCount);
+            });
         });
     };
 
-    // === Event Listeners (Unchanged) ===
+    // ... Event Listeners ...
     if (incrementBtn) incrementBtn.addEventListener('click', () => modifyCount(1));
     if (decrementBtn) decrementBtn.addEventListener('click', () => modifyCount(-1));
     if (historyBtn) historyBtn.addEventListener('click', () => {
@@ -139,6 +169,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // === Initial Load ===
     updateUI();
 });

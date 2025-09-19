@@ -1,32 +1,50 @@
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    width: 280px; /* Increased width for more space */
+    width: 320px; /* Made wider for the new layout */
     padding: 15px;
     background-color: #f4f5f7;
     color: #172b4d;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.654);
+    overflow: hidden;
+    display: flex; /* Added for layout */
 }
 
 .container {
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .hidden {
     display: none;
 }
 
-/* Add this new style for the countdown timer */
+/* Your custom countdown style (Unchanged) */
 .countdown-display {
     font-size: 24px;
     font-weight: bold;
-    color: #42526e; /* A dark gray color */
-    margin-bottom: 10px; /* Adds some space below the timer */
-    font-family: monospace; /* Ensures numbers don't shift width */
+    color: #41375c;
+    margin-bottom: 10px;
+    font-family: monospace;
+    letter-spacing: 1px;
+    background-color: #b8ccd3;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: inline-block;
+    min-width: 100px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.019);
 }
 
+/* Your custom date style (Unchanged) */
 .date-display {
     font-size: 13px;
     color: #5e6c84;
     margin-bottom: 5px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: bold;
 }
 
 h1 {
@@ -45,14 +63,14 @@ h1 {
 .button-group {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 10px; /* Adjusted gap */
     margin-bottom: 20px;
 }
 
 .btn {
-    width: 50px;
-    height: 50px;
-    font-size: 28px;
+    width: 45px; /* Adjusted size */
+    height: 45px; /* Adjusted size */
+    font-size: 24px; /* Adjusted size */
     font-weight: bold;
     border: none;
     border-radius: 50%;
@@ -75,13 +93,6 @@ h1 {
     background-color: #0065ff;
 }
 
-hr {
-    border: 0;
-    height: 1px;
-    background: #c1c7d0;
-    margin: 20px 0;
-}
-
 .history-btn {
     width: 100%;
     padding: 10px;
@@ -93,11 +104,38 @@ hr {
     border: none;
     border-radius: 5px;
     transition: background-color 0.2s ease;
+    margin-top: auto; /* Pushes button to the bottom */
 }
 
 .history-btn:hover {
     background-color: #0052cc;
 }
+
+/* NEW: Styles for two-column layout */
+.main-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin: 10px 0;
+}
+.counter-section, .streak-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* NEW: Streak Section Styles */
+.streak-section {
+    padding-left: 15px;
+    border-left: 1px solid #dfe1e6;
+    width: 120px;
+}
+.streak-display { display: flex; align-items: center; }
+.streak-emoji { font-size: 36px; }
+#currentStreak { font-size: 40px; font-weight: bold; color: #ff9900; margin-left: 5px; }
+.streak-label { font-size: 12px; color: #5e6c84; }
+.streak-hr { border: 0; height: 1px; background: #dfe1e6; width: 50%; margin: 10px 0; }
+.streak-highest { font-size: 12px; font-weight: bold; color: #172b4d; }
 
 /* History View Styles */
 .history-header {
@@ -106,46 +144,39 @@ hr {
     margin-bottom: 15px;
     position: relative;
     justify-content: center;
+    height: 25px;
+    flex-shrink: 0;
 }
-
 .back-btn {
     position: absolute;
     left: 0;
+    top: 0;
+    font-size: 20px;
     background: none;
     border: none;
-    font-size: 24px;
     cursor: pointer;
     color: #42526e;
+    padding: 0;
 }
-
+.back-btn:hover { color: #0052cc; }
 #fullHistoryContainer {
-    max-height: 300px;
+    max-height: 300px; /* Set a maximum height for the history container */
+    overflow-y: auto; /* Enable vertical scrolling */
+    flex-grow: 1; /* Allows list to take remaining space */
     overflow-y: auto;
     text-align: left;
+    padding-right: 5px;
 }
-
 .history-entry {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 8px;
     border-radius: 3px;
 }
-
-.history-entry:nth-child(odd) {
-    background-color: #dfe1e6;
-}
-
-.history-date {
-    font-size: 14px;
-    color: #172b4d;
-}
-
-.history-count {
-    font-size: 14px;
-    font-weight: bold;
-    color: #0052cc;
-}
-
+.history-entry:nth-child(odd) { background-color: #dfe1e6; }
+.history-date { font-size: 14px; color: #172b4d; font-weight: bold; }
+.history-count { font-size: 14px; font-weight: bold; color: #0052cc; padding-left: 2px; }
 .total-count {
     font-size: 14px;
     font-weight: bold;
@@ -154,4 +185,5 @@ hr {
     padding: 8px;
     background-color: #dfe1e6;
     border-radius: 3px;
+    flex-shrink: 0;
 }
